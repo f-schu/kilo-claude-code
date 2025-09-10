@@ -16,12 +16,26 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          for f in hooks/*.sh; do echo "bash -n $f"; bash -n "$f"; done
+          for f in hooks/*.sh; do 
+            if head -n1 "$f" | grep -qi 'python'; then
+              echo "skip bash -n (python script): $f"
+              continue
+            fi
+            echo "bash -n $f" 
+            bash -n "$f"
+          done
       - name: ShellCheck (if available)
         run: |
           sudo apt-get update && sudo apt-get install -y shellcheck || true
           if command -v shellcheck >/dev/null; then
-            shellcheck hooks/*.sh || true
+            # Skip files that are actually Python but named .sh
+            set -euo pipefail
+            for f in hooks/*.sh; do 
+              if head -n1 "$f" | grep -qi 'python'; then
+                echo "skip shellcheck (python script): $f"; continue; 
+              fi
+              shellcheck "$f" || true; 
+            done
           fi
       - name: Python syntax check
         run: |
@@ -31,4 +45,3 @@ jobs:
         run: |
           chmod +x hooks/agent-response-validate.py
           hooks/agent-response-validate.py
-
