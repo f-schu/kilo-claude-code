@@ -166,6 +166,11 @@ Loop Prevention
   - Tracks consecutive failures and, after 3 repeats, posts a summary to the linked GitHub issue with log paths
   - Allows completion once to move to the next task (counter resets afterwards)
   - Normal behavior resumes on subsequent runs
+  - Configure the threshold via env `CLAUDE_GUARD_MAX_RETRIES` or file `.claude/guard-max-retries`
+
+Plan-Guard Relax by Label
+- If the linked GitHub issue (created by the guard) has a label `fix`, plan-guard will not block even for complex tasks or strict mode edits.
+- Use when you're in an active bug-fix flow and a heavy plan would slow you down.
 
 ## Subagent Orchestration Protocol
 

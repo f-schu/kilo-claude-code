@@ -208,6 +208,15 @@ STATE_FILE="${STATE_DIR}/completion-guard.state"
 mkdir -p "$STATE_DIR"
 CONSEC_FAILS=0
 FAIL_REASON=""
+# Max retries configuration: env > file > default(3)
+MAX_RETRIES=${CLAUDE_GUARD_MAX_RETRIES:-}
+if [[ -z "$MAX_RETRIES" && -f .claude/guard-max-retries ]]; then
+  MAX_RETRIES="$(tr -d '\r' < .claude/guard-max-retries | head -n1 | xargs)"
+fi
+case "$MAX_RETRIES" in
+  '' ) MAX_RETRIES=3 ;;
+  * ) if ! echo "$MAX_RETRIES" | grep -qE '^[0-9]+$'; then MAX_RETRIES=3; fi ;;
+esac
 if [[ -f "$STATE_FILE" ]]; then
   # shellcheck disable=SC1090
   source "$STATE_FILE" 2>/dev/null || true
@@ -228,8 +237,8 @@ if [[ $FAIL -ne 0 ]]; then
     STATUS="Automated gates failed. Please address lint/tests.\n\nLogs:\n- Lint: ${LINT_LOG}\n- Tests: ${TEST_LOG}"
     "$SCRIPT_DIR/github-ops.sh" comment "$STATUS" || true
   fi
-  # If we failed 3 times in a row, document and allow moving on
-  if [[ "$CONSEC_FAILS" -ge 3 ]]; then
+  # If we failed MAX_RETRIES times in a row, document and allow moving on
+  if [[ "$CONSEC_FAILS" -ge "$MAX_RETRIES" ]]; then
     echo -e "${YELLOW}Repeated failures detected (${CONSEC_FAILS}). Documenting and allowing completion to avoid loops.${NC}" >&2
     if [[ -x "$SCRIPT_DIR/github-ops.sh" ]]; then
       SUMMARY=$(cat <<EOF

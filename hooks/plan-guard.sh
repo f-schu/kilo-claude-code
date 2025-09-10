@@ -47,9 +47,26 @@ if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -qi '(Write|Edit|Multi
   fi
 fi
 
+# Label-based relax: if current issue has 'fix' label, don't block
+relax=false
+if [[ -x "$SCRIPT_DIR/github-ops.sh" && -f .claude/.current_issue ]]; then
+  if command -v gh >/dev/null 2>&1; then
+    if gh auth status >/dev/null 2>&1; then
+      ISSUE_NUM="$(cat .claude/.current_issue 2>/dev/null)"
+      if [[ -n "$ISSUE_NUM" ]]; then
+        LABELS="$(gh issue view "$ISSUE_NUM" --json labels --jq '.labels[].name' 2>/dev/null || true)"
+        if echo "$LABELS" | awk 'BEGIN{IGNORECASE=1} /fix/ {found=1} END{exit !found}'; then
+          relax=true
+          echo -e "${YELLOW}Plan-guard relaxed due to 'fix' label on issue #${ISSUE_NUM}.${NC}" >&2
+        fi
+      fi
+    fi
+  fi
+fi
+
 # Strict mode via toggle file: block on any write/edit regardless of complexity
 if [[ -f "$CLAUDE_PLAN_GUARD_STRICT_FILE" ]]; then
-if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -q '"tool_name"\s*:\s*"(Write|Edit|MultiEdit)"' || grep -q '"tool_name"[[:space:]]*:[[:space:]]*"\(Write\|Edit\|MultiEdit\)"'); then
+  if [[ "$relax" != true ]] && echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -q '"tool_name"\s*:\s*"(Write|Edit|MultiEdit)"' || grep -q '"tool_name"[[:space:]]*:[[:space:]]*"\(Write\|Edit\|MultiEdit\)"'); then
     echo -e "${RED}⛔ Strict plan required for this repository (toggle file detected).${NC}" >&2
     cat >&2 <<'EOF'
 Please draft the following before proceeding:
@@ -64,7 +81,7 @@ EOF
 fi
 
 # If enforcement disabled or not complex, do not block
-if [[ "$CLAUDE_PLAN_GUARD_ENFORCE" != "true" || "$CLAUDE_PLAN_GUARD_BLOCK_COMPLEX" != "true" || "$is_complex" != true ]]; then
+if [[ "$relax" == true || "$CLAUDE_PLAN_GUARD_ENFORCE" != "true" || "$CLAUDE_PLAN_GUARD_BLOCK_COMPLEX" != "true" || "$is_complex" != true ]]; then
   exit 0
 fi
 
