@@ -154,6 +154,13 @@ When working in a GitHub-backed repo:
 - README/Docs: Update `README.md` and docs when behavior or usage changes
 - Tidy Repo: Keep structure conventional for the ecosystem; avoid committing build artifacts or large binaries; propose structural changes rather than auto-moving files
 
+Test Gate Overrides (Special Tasks)
+- For review-only or audit tasks where failing tests are expected evidence, you may allow the test gate to be non-blocking by setting one of:
+  - `CLAUDE_TASK_MODE=review` (environment), or
+  - Create a file `.claude/task-mode` with the single line `review`, or
+  - Set `CLAUDE_ALLOW_FAILING_TESTS=1` (environment) or create `.claude/allow-failing-tests`
+- Lint gate remains mandatory. Use this sparingly and document rationale in the GitHub issue comment.
+
 ## Subagent Orchestration Protocol
 
 For tasks with ≥2 independent subtasks or mixed expertise:

@@ -27,6 +27,20 @@ mkdir -p "$LOG_DIR"
 LINT_LOG="${LOG_DIR}/completion-guard_lint_${RUNSTAMP}.log"
 TEST_LOG="${LOG_DIR}/completion-guard_test_${RUNSTAMP}.log"
 
+# Task mode overrides (allow review-only tasks to pass without green tests)
+TASK_MODE="${CLAUDE_TASK_MODE:-}"
+if [[ -z "$TASK_MODE" && -f .claude/task-mode ]]; then
+  TASK_MODE="$(tr -d '\r' < .claude/task-mode | head -n1 | xargs)"
+fi
+ALLOW_FAILING_TESTS="${CLAUDE_ALLOW_FAILING_TESTS:-}"
+if [[ -z "$ALLOW_FAILING_TESTS" && -f .claude/allow-failing-tests ]]; then
+  ALLOW_FAILING_TESTS=1
+fi
+TEST_GATE_OPTIONAL=false
+if [[ "$TASK_MODE" == "review" || "$ALLOW_FAILING_TESTS" == "1" || "$ALLOW_FAILING_TESTS" == "true" ]]; then
+  TEST_GATE_OPTIONAL=true
+fi
+
 # Helper to run a command and mark failure
 run_step() {
   local title="$1"; shift
@@ -162,7 +176,13 @@ readme_check() {
 }
 
 run_step "Lint gate" lint_check || true
-run_step "Test gate" test_check || true
+if ! run_step "Test gate" test_check; then
+  if [[ "$TEST_GATE_OPTIONAL" == true ]]; then
+    echo -e "${YELLOW}Test failures allowed for this task mode (review).${NC}" >&2
+  else
+    true
+  fi
+fi
 evidence_hint
 readme_check || true
 
