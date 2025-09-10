@@ -31,6 +31,17 @@ How to use
   - `CLAUDE_PLAN_GUARD_BLOCK_COMPLEX=true|false` (default true)
   - `CLAUDE_GH_AUTO_CLOSE=true|false` (default true)
 
+Quick planning helper
+- Generate a lightweight plan and set TTL for complex edits:
+  ```bash
+  make plan scope="Fix drop order for genome tables" \
+            non_goals="no unrelated refactors" \
+            constraints="prod data unaffected,time<30m" \
+            acceptance="unit tests green,drop order correct" \
+            ttl=45
+  ```
+  This writes `.claude/plan.json` and `.claude/plan-ttl-min`; plan-guard recognizes this fresh plan and allows complex edits for the TTL duration.
+
 Privacy and safety
 - Sensitive files (credentials, logs, local snapshots) are excluded via `.gitignore`.
 - Review changes before pushing to GitHub.
