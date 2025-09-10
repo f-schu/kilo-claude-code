@@ -1,6 +1,8 @@
 Kilo Claude Code
 ================
 
+![Repository Banner](assets/header.jpg)
+
 This repository contains my Claude Code configuration, hooks, and agent instructions. It is designed to enforce high-quality workflows with explicit planning, subagent orchestration, and strong completion gates.
 
 Key features
@@ -23,4 +25,3 @@ Privacy and safety
 
 License
 Specify your preferred license here.
-
