@@ -311,6 +311,27 @@ fi
 
 if [[ $FAIL -ne 0 ]]; then
   echo -e "\n${RED}❌ DoD not met: fix failing gates before declaring done.${NC}" >&2
+  # Pretty summary if rich is available
+  if command -v python3 >/dev/null 2>&1; then
+    cat <<JSON | python3 "$SCRIPT_DIR/rich-summary.py" 2>/dev/null || true
+{
+  "title": "Completion Guard — FAILED",
+  "style": "red",
+  "fields": [
+    ["Test gate optional", "${TEST_GATE_OPTIONAL}"],
+    ["Consecutive fails", "${CONSEC_FAILS}"],
+    ["Max retries", "${MAX_RETRIES}"],
+    ["Reason", "${FAIL_REASON}"],
+    ["Lint log", "${LINT_LOG}"],
+    ["Test log", "${TEST_LOG}"]
+  ],
+  "notes": [
+    "Resolve failures or enable review-mode for review tasks.",
+    "See logs for evidence paths."
+  ]
+}
+JSON
+  fi
   # Track consecutive failures and reason
   if [[ "$TEST_GATE_OPTIONAL" == true ]]; then
     FAIL_REASON="lint_or_other"
@@ -359,6 +380,23 @@ if [[ -x "$SCRIPT_DIR/github-ops.sh" ]]; then
   if [[ "$TEST_GATE_OPTIONAL" != true && "$ADDITIVE_ONLY" -ne 1 && "$IMPACT_OK" -eq 1 && "${CLAUDE_GH_AUTO_CLOSE:-true}" == "true" ]]; then
     "$SCRIPT_DIR/github-ops.sh" close "Closing automatically after successful gates." || true
   fi
+fi
+# Pretty success summary if rich is available
+if command -v python3 >/dev/null 2>&1; then
+  cat <<JSON | python3 "$SCRIPT_DIR/rich-summary.py" 2>/dev/null || true
+{
+  "title": "Completion Guard — PASSED",
+  "style": "green",
+  "fields": [
+    ["Test gate optional", "${TEST_GATE_OPTIONAL}"],
+    ["Lint log", "${LINT_LOG}"],
+    ["Test log", "${TEST_LOG}"]
+  ],
+  "notes": [
+    "All gates green."
+  ]
+}
+JSON
 fi
 # Exit 0 to allow normal completion
 exit 0

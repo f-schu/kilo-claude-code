@@ -50,6 +50,6 @@ System setup
   - Rich for pretty CLI output in validators: `pipx install rich` or `pip install rich`
 
 Optional enhancements
-- Rich-powered output: some tools (like agent validator) use Rich for nicer tables if installed; otherwise plain text
+- Rich-powered output: guards and validator use Rich for nicer summaries when installed; otherwise plain text
 - Small-edit passthrough: set `CLAUDE_SMALL_EDIT_MAX_LINES` (default 10) or file `.claude/small-edit-max-lines`
 - Plan/Completion overrides: see CLAUDE.md for label toggles and env/file-based overrides

@@ -141,6 +141,25 @@ if [[ "$relax" == true || "$small_edit_ok" == true || "$CLAUDE_PLAN_GUARD_ENFORC
       echo -e "${YELLOW}Warning:${NC} Detected $NF untracked new files. Consider adding a plan note or create .claude/ack-many-new-files to acknowledge bulk file creation." >&2
     fi
   fi
+  # Pretty summary if rich is available
+  if command -v python3 >/dev/null 2>&1; then
+    cat <<JSON | python3 "$SCRIPT_DIR/rich-summary.py" 2>/dev/null || true
+{
+  "title": "Plan Guard — PASS/RELAX",
+  "style": "green",
+  "fields": [
+    ["Complex", "${is_complex}"],
+    ["Relax by label", "${relax}"],
+    ["Small edit ok", "${small_edit_ok}"],
+    ["Untracked files", "${NF:-0}"],
+    ["Warn threshold", "${NEW_FILES_WARN_THRESHOLD}"]
+  ],
+  "notes": [
+    "Proceeding without blocking."
+  ]
+}
+JSON
+  fi
   exit 0
 fi
 
@@ -154,6 +173,33 @@ Please draft the following before proceeding:
 
 After that, proceed with implementation.
 EOF
+
+# Pretty block summary if rich is available
+if command -v python3 >/dev/null 2>&1; then
+  # Compute NF for display
+  NF_BLOCK=0
+  if [[ -d .git ]]; then
+    NF_BLOCK=$(git status --porcelain 2>/dev/null | awk '$1=="??"{c++} END{print c+0}')
+  fi
+  cat <<JSON | python3 "$SCRIPT_DIR/rich-summary.py" 2>/dev/null || true
+{
+  "title": "Plan Guard — BLOCKED",
+  "style": "yellow",
+  "fields": [
+    ["Complex", "${is_complex}"],
+    ["Relax by label", "${relax}"],
+    ["Small edit ok", "${small_edit_ok}"],
+    ["Strict mode", "$( [[ -f "$CLAUDE_PLAN_GUARD_STRICT_FILE" ]] && echo true || echo false )"],
+    ["Untracked files", "${NF_BLOCK}"],
+    ["Warn threshold", "${NEW_FILES_WARN_THRESHOLD}"]
+  ],
+  "notes": [
+    "Provide Task Contract, Agent Allocation, Subagent Contracts.",
+    "Or add 'fix' label to relax for bug-fix flows."
+  ]
+}
+JSON
+fi
 
 # Exit 2 to keep session active until plan is produced
 exit 2
