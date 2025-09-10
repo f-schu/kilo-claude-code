@@ -1,0 +1,86 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  gitleaks:
+    name: Secret Scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+
+  python-audit:
+    name: Python Dependency Audit
+    if: ${{ hashFiles('**/requirements.txt', '**/pyproject.toml') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install pip-audit
+        run: pipx install pip-audit || pip install pip-audit
+      - name: Run pip-audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ls **/requirements.txt >/dev/null 2>&1; then
+            for f in $(ls **/requirements.txt); do echo "Auditing $f"; pip-audit -r "$f"; done
+          elif ls **/pyproject.toml >/dev/null 2>&1; then
+            echo "Auditing pyproject environment"
+            pip-audit
+          else
+            echo "No Python manifests found"
+          fi
+
+  node-audit:
+    name: Node Audit
+    if: ${{ hashFiles('**/package.json') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - name: Install dependencies (if lockfile)
+        run: |
+          if [ -f package-lock.json ] || [ -f pnpm-lock.yaml ] || [ -f yarn.lock ]; then
+            npm ci || npm install
+          fi
+      - name: npm audit
+        run: npm audit --audit-level=high || npm audit --audit-level=critical
+
+  go-vulncheck:
+    name: Go Vulnerability Check
+    if: ${{ hashFiles('**/go.mod') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 'stable'
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: Run govulncheck
+        run: govulncheck ./...
+
+  rust-audit:
+    name: Rust Cargo Audit
+    if: ${{ hashFiles('**/Cargo.toml') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+      - name: Run cargo audit
+        run: cargo audit
+

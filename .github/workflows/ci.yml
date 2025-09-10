@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  hooks-lint:
+    name: Lint Hooks and Validate Agents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax check
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for f in hooks/*.sh; do echo "bash -n $f"; bash -n "$f"; done
+      - name: ShellCheck (if available)
+        run: |
+          sudo apt-get update && sudo apt-get install -y shellcheck || true
+          if command -v shellcheck >/dev/null; then
+            shellcheck hooks/*.sh || true
+          fi
+      - name: Python syntax check
+        run: |
+          set -euo pipefail
+          python -m py_compile hooks/*.py || true
+      - name: Validate Agent Return Formats
+        run: |
+          chmod +x hooks/agent-response-validate.py
+          hooks/agent-response-validate.py
+
