@@ -3,6 +3,10 @@ Kilo Claude Code
 
 ![Repository Banner](assets/header.jpg)
 
+![CI](https://github.com/f-schu/kilo-claude-code/actions/workflows/ci.yml/badge.svg)
+![Security Scan](https://github.com/f-schu/kilo-claude-code/actions/workflows/security-scan.yml/badge.svg)
+![Validate Agents](https://github.com/f-schu/kilo-claude-code/actions/workflows/validate-agents.yml/badge.svg)
+
 This repository contains my Claude Code configuration, hooks, and agent instructions. It is designed to enforce high-quality workflows with explicit planning, subagent orchestration, and strong completion gates.
 
 Key features

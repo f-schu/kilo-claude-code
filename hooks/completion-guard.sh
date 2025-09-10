@@ -41,6 +41,22 @@ if [[ "$TASK_MODE" == "review" || "$ALLOW_FAILING_TESTS" == "1" || "$ALLOW_FAILI
   TEST_GATE_OPTIONAL=true
 fi
 
+# Heuristic: If current GitHub issue has label 'review', allow failing tests
+if [[ "$TEST_GATE_OPTIONAL" != true && -x "$SCRIPT_DIR/github-ops.sh" && -f .claude/.current_issue ]]; then
+  if command -v gh >/dev/null 2>&1; then
+    if gh auth status >/dev/null 2>&1; then
+      ISSUE_NUM="$(cat .claude/.current_issue 2>/dev/null)"
+      if [[ -n "$ISSUE_NUM" ]]; then
+        LABELS="$(gh issue view "$ISSUE_NUM" --json labels --jq '.labels[].name' 2>/dev/null || true)"
+        if echo "$LABELS" | awk 'BEGIN{IGNORECASE=1} /review/ {found=1} END{exit !found}'; then
+          TEST_GATE_OPTIONAL=true
+          echo -e "${YELLOW}Review label detected on issue #${ISSUE_NUM}; allowing test failures for this task.${NC}" >&2
+        fi
+      fi
+    fi
+  fi
+fi
+
 # Helper to run a command and mark failure
 run_step() {
   local title="$1"; shift
