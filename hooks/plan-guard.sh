@@ -13,6 +13,15 @@ NC='\033[0m'
 CLAUDE_PLAN_GUARD_ENFORCE="${CLAUDE_PLAN_GUARD_ENFORCE:-true}"
 CLAUDE_PLAN_GUARD_BLOCK_COMPLEX="${CLAUDE_PLAN_GUARD_BLOCK_COMPLEX:-true}"
 CLAUDE_PLAN_GUARD_STRICT_FILE="${CLAUDE_PLAN_GUARD_STRICT_FILE:-.claude/plan-guard.strict}"
+# Policy: permissive | guided | strict
+POLICY="${CLAUDE_PLAN_GUARD_POLICY:-}"
+if [[ -z "$POLICY" && -f .claude/plan-guard.policy ]]; then
+  POLICY="$(tr -d '\r' < .claude/plan-guard.policy | head -n1 | xargs)"
+fi
+case "${POLICY,,}" in
+  permissive|guided|strict) ;;
+  *) POLICY="guided" ;;
+esac
 NEW_FILES_WARN_THRESHOLD="${CLAUDE_NEW_FILES_WARN_THRESHOLD:-}"
 if [[ -z "$NEW_FILES_WARN_THRESHOLD" && -f .claude/new-files-warn-threshold ]]; then
   NEW_FILES_WARN_THRESHOLD="$(tr -d '\r' < .claude/new-files-warn-threshold | head -n1 | xargs)"
@@ -30,6 +39,16 @@ fi
 case "$SMALL_EDIT_MAX_LINES" in
   '' ) SMALL_EDIT_MAX_LINES=10 ;;
   * ) if ! echo "$SMALL_EDIT_MAX_LINES" | grep -qE '^[0-9]+$'; then SMALL_EDIT_MAX_LINES=10; fi ;;
+esac
+
+# Plan freshness TTL (minutes)
+PLAN_TTL_MIN="${CLAUDE_PLAN_TTL_MIN:-}"
+if [[ -z "$PLAN_TTL_MIN" && -f .claude/plan-ttl-min ]]; then
+  PLAN_TTL_MIN="$(tr -d '\r' < .claude/plan-ttl-min | head -n1 | xargs)"
+fi
+case "$PLAN_TTL_MIN" in
+  '' ) PLAN_TTL_MIN=45 ;;
+  * ) if ! echo "$PLAN_TTL_MIN" | grep -qE '^[0-9]+$'; then PLAN_TTL_MIN=45; fi ;;
 esac
 
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -65,6 +84,21 @@ if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -qi '(Write|Edit|Multi
   fi
 fi
 
+# Fresh plan detection
+has_fresh_plan=false
+if command -v jq >/dev/null 2>&1 && [[ -f .claude/plan.json ]]; then
+  # Check required fields and age
+  if jq -er '.task_contract.scope and (.agent_allocation|length>=0) and (.subagent_contracts|length>=0)' .claude/plan.json >/dev/null 2>&1; then
+    # Check age
+    now=$(date +%s)
+    mtime=$(stat -c %Y .claude/plan.json 2>/dev/null || stat -f %m .claude/plan.json 2>/dev/null || echo 0)
+    age_min=$(( (now - mtime) / 60 ))
+    if [[ "$age_min" -le "$PLAN_TTL_MIN" ]]; then
+      has_fresh_plan=true
+    fi
+  fi
+fi
+
 # Label-based relax: if current issue has 'fix' label, don't block
 relax=false
 if [[ -x "$SCRIPT_DIR/github-ops.sh" && -f .claude/.current_issue ]]; then
@@ -84,7 +118,13 @@ fi
 
 # Small-edit passthrough: allow single-file edits under threshold, no new files, no schema/API changes
 small_edit_ok=false
-if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -q '"tool_name"\s*:\s*"(Write|Edit)"' || grep -q '"tool_name"[[:space:]]*:[[:space:]]*"\(Write\|Edit\)"'); then
+TOOL=""
+if command -v jq >/dev/null 2>&1; then
+  TOOL=$(echo "$CONTENT" | jq -r '.tool_name // empty' 2>/dev/null)
+else
+  TOOL=$(echo "$CONTENT" | sed -n 's/.*"tool_name"[[:space:]]*:[[:space:]]*"\([^"]\+\)".*/\1/p' | head -n1)
+fi
+if echo "$TOOL" | grep -qiE '^(Write|Edit)$'; then
   # Extract target file path
   target=""
   if command -v jq >/dev/null 2>&1; then
@@ -116,9 +156,27 @@ if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -q '"tool_name"\s*:\s*
   fi
 fi
 
+# Bash small-edit passthrough: short scripts without dangerous commands or schema/API patterns
+if echo "$TOOL" | grep -qi '^Bash$'; then
+  # Count lines
+  lines=$(echo "$CONTENT" | wc -l | awk '{print $1}')
+  dangerous=false
+  if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -qi '\brm\s+-rf|\bmv\s|\bcp\s+-r|find\s+.*-exec' || grep -qiE '\brm[[:space:]]+-rf|\bmv[[:space:]]|\bcp[[:space:]]+-r|find[[:space:]].*-exec'); then
+    dangerous=true
+  fi
+  schema_api=false
+  if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -qi '(CREATE|DROP|ALTER)\s+TABLE|add_api_route|router\.|@app\.|OpenAPI' || grep -qiE '(CREATE|DROP|ALTER)[[:space:]]+TABLE|add_api_route|router\.|@app\.|OpenAPI'); then
+    schema_api=true
+  fi
+  if [[ "$dangerous" != true && "$schema_api" != true && "$lines" -le "$SMALL_EDIT_MAX_LINES" ]]; then
+    small_edit_ok=true
+    echo -e "${YELLOW}Small-edit passthrough:${NC} allowing short Bash snippet under ${SMALL_EDIT_MAX_LINES} lines." >&2
+  fi
+fi
+
 # Strict mode via toggle file: block on any write/edit regardless of complexity
 if [[ -f "$CLAUDE_PLAN_GUARD_STRICT_FILE" ]]; then
-  if [[ "$relax" != true && "$small_edit_ok" != true ]] && echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -q '"tool_name"\s*:\s*"(Write|Edit|MultiEdit)"' || grep -q '"tool_name"[[:space:]]*:[[:space:]]*"\(Write\|Edit\|MultiEdit\)"'); then
+  if [[ "$relax" != true && "$small_edit_ok" != true && "$has_fresh_plan" != true ]] && echo "$TOOL" | grep -qiE '^(Write|Edit|MultiEdit|Bash)$'; then
     echo -e "${RED}⛔ Strict plan required for this repository (toggle file detected).${NC}" >&2
     cat >&2 <<'EOF'
 Please draft the following before proceeding:
@@ -133,7 +191,7 @@ EOF
 fi
 
 # If enforcement disabled or not complex, do not block
-if [[ "$relax" == true || "$small_edit_ok" == true || "$CLAUDE_PLAN_GUARD_ENFORCE" != "true" || "$CLAUDE_PLAN_GUARD_BLOCK_COMPLEX" != "true" || "$is_complex" != true ]]; then
+if [[ "${POLICY}" == "permissive" || "$relax" == true || "$small_edit_ok" == true || "$has_fresh_plan" == true || "$CLAUDE_PLAN_GUARD_ENFORCE" != "true" || ( "${POLICY}" == "guided" && "$CLAUDE_PLAN_GUARD_BLOCK_COMPLEX" != "true" ) || "$is_complex" != true ]]; then
   # Warn if there are many untracked new files without acknowledgment
   if [[ -d .git ]]; then
     NF=$(git status --porcelain 2>/dev/null | awk '$1=="??"{c++} END{print c+0}')
@@ -173,6 +231,23 @@ Please draft the following before proceeding:
 
 After that, proceed with implementation.
 EOF
+
+# If no plan file exists, show quick template hint
+if [[ ! -f .claude/plan.json ]]; then
+  cat >&2 <<'EOF'
+Plan template (save to .claude/plan.json):
+{
+  "task_contract": {
+    "scope": "one sentence",
+    "non_goals": ["out of scope"],
+    "constraints": ["env","time"],
+    "acceptance": ["tests to pass","artifacts"]
+  },
+  "agent_allocation": [],
+  "subagent_contracts": []
+}
+EOF
+fi
 
 # Pretty block summary if rich is available
 if command -v python3 >/dev/null 2>&1; then

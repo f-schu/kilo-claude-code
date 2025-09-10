@@ -173,6 +173,17 @@ Plan-Guard Relax by Label
 - If the linked GitHub issue (created by the guard) has a label `fix`, plan-guard will not block even for complex tasks or strict mode edits.
 - Use when you're in an active bug-fix flow and a heavy plan would slow you down.
 
+Plan Guard Policies
+- `permissive`: never blocks; prints guidance only
+- `guided` (default): blocks only for clearly complex changes; allows small edits and fresh plan state
+- `strict`: requires planning unless relaxed by label or small-edit passthrough
+- Configure via env `CLAUDE_PLAN_GUARD_POLICY` or file `.claude/plan-guard.policy`
+
+Fresh Plan State
+- Save a lightweight plan to `.claude/plan.json` to allow complex edits without blocking for a limited time
+- Required fields: `task_contract.scope`, `agent_allocation` (optional), `subagent_contracts` (optional)
+- TTL: `CLAUDE_PLAN_TTL_MIN` minutes or file `.claude/plan-ttl-min` (default 45)
+
 Impact Map Requirement
 - When adding new files, maintain `.claude/impact.json` to document integration with existing modules
 - Schema example:
@@ -262,3 +273,4 @@ Shell scripts should check for these tools and fall back to POSIX equivalents to
 ## MOST IMPORTANT
 
 Deliver the most concise, correct solution that meets the Task Contract and DoD without cutting corners. Prefer minimal, focused changes—but never at the expense of completeness or quality.
+- /ultrathink  YOU MUST MAKE SURE EVERYTHING IS PART OF THE MAIN PIPELINE!!! after integrating it run the main pipleine including the query palcement and check the placement_results.json  to make sure the taxonomic strings are there correctly now!

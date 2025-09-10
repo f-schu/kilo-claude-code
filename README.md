@@ -53,3 +53,5 @@ Optional enhancements
 - Rich-powered output: guards and validator use Rich for nicer summaries when installed; otherwise plain text
 - Small-edit passthrough: set `CLAUDE_SMALL_EDIT_MAX_LINES` (default 10) or file `.claude/small-edit-max-lines`
 - Plan/Completion overrides: see CLAUDE.md for label toggles and env/file-based overrides
+- Policies: set plan guard policy via `CLAUDE_PLAN_GUARD_POLICY` or `.claude/plan-guard.policy` to one of `permissive|guided|strict` (default guided)
+- Fresh plan recognition: place a short plan in `.claude/plan.json` (valid for `PLAN_TTL_MIN` minutes; default 45) to allow complex edits without blocking
