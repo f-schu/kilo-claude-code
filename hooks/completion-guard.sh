@@ -18,6 +18,7 @@ echo -e "${BLUE}✅ Completion Guard: Verifying Definition of Done${NC}" >&2
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}" >&2
 
 FAIL=0
+ADDITIVE_ONLY=0
 
 # Logs
 TODAY="$(date +%Y%m%d)"
@@ -191,6 +192,33 @@ readme_check() {
   return $warn
 }
 
+change_pattern_check() {
+  [[ -d .git ]] || return 0
+  local added=0 modified=0 deleted=0 untracked=0
+  while read -r status file; do
+    case "$status" in
+      A*|*A) added=$((added+1)) ;;
+      M*|*M) modified=$((modified+1)) ;;
+      D*|*D) deleted=$((deleted+1)) ;;
+      \?\?) untracked=$((untracked+1)) ;;
+    esac
+  done < <(git status --porcelain 2>/dev/null || true)
+
+  local new_total=$((added+untracked))
+  if [[ $new_total -ge 3 && $modified -eq 0 ]]; then
+    ADDITIVE_ONLY=1
+    echo -e "${YELLOW}Notice:${NC} Detected ${new_total} new files with no modifications to existing files." >&2
+    echo -e "${YELLOW}Risk:${NC} additive-only changes can indicate bypassing integration or duplication." >&2
+    if [[ ! -f .claude/allow-additive-fix ]]; then
+      echo -e "${RED}Blocking:${NC} create .claude/allow-additive-fix to acknowledge additive-only approach, or modify existing code to integrate new modules." >&2
+      return 2
+    else
+      echo -e "${YELLOW}Override:${NC} .claude/allow-additive-fix present; proceeding despite additive-only changes (auto-close disabled)." >&2
+    fi
+  fi
+  return 0
+}
+
 run_step "Lint gate" lint_check || true
 if ! run_step "Test gate" test_check; then
   if [[ "$TEST_GATE_OPTIONAL" == true ]]; then
@@ -201,6 +229,9 @@ if ! run_step "Test gate" test_check; then
 fi
 evidence_hint
 readme_check || true
+if ! change_pattern_check; then
+  FAIL=1
+fi
 
 # Loop-prevention state handling
 STATE_DIR=".claude"
@@ -269,7 +300,7 @@ printf 'CONSEC_FAILS=0\nFAIL_REASON=\n' > "$STATE_FILE"
 if [[ -x "$SCRIPT_DIR/github-ops.sh" ]]; then
   SUCCESS_MSG="All completion gates passed. Evidence logs:\n- Lint: ${LINT_LOG}\n- Tests: ${TEST_LOG}"
   "$SCRIPT_DIR/github-ops.sh" comment "$SUCCESS_MSG" || true
-  if [[ "${CLAUDE_GH_AUTO_CLOSE:-true}" == "true" ]]; then
+  if [[ "$TEST_GATE_OPTIONAL" != true && "$ADDITIVE_ONLY" -ne 1 && "${CLAUDE_GH_AUTO_CLOSE:-true}" == "true" ]]; then
     "$SCRIPT_DIR/github-ops.sh" close "Closing automatically after successful gates." || true
   fi
 fi
