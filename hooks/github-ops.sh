@@ -63,7 +63,12 @@ find_issue_by_title() {
 create_issue() {
   local title="$1"; shift
   local body="$1"; shift || true
-  gh issue create -t "$title" -b "$body" --json number --jq .number 2>/dev/null
+  local out
+  if ! out=$(gh issue create -t "$title" -b "$body" --json number --jq .number 2>&1); then
+    echo "gh issue create failed: $out" >&2
+    return 1
+  fi
+  echo "$out"
 }
 
 comment_issue() {
@@ -158,4 +163,3 @@ case "${1:-}" in
 esac
 
 exit 0
-

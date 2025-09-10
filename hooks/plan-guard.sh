@@ -22,6 +22,16 @@ case "$NEW_FILES_WARN_THRESHOLD" in
   * ) if ! echo "$NEW_FILES_WARN_THRESHOLD" | grep -qE '^[0-9]+$'; then NEW_FILES_WARN_THRESHOLD=5; fi ;;
 esac
 
+# Small-edit passthrough configuration (max changed lines)
+SMALL_EDIT_MAX_LINES="${CLAUDE_SMALL_EDIT_MAX_LINES:-}"
+if [[ -z "$SMALL_EDIT_MAX_LINES" && -f .claude/small-edit-max-lines ]]; then
+  SMALL_EDIT_MAX_LINES="$(tr -d '\r' < .claude/small-edit-max-lines | head -n1 | xargs)"
+fi
+case "$SMALL_EDIT_MAX_LINES" in
+  '' ) SMALL_EDIT_MAX_LINES=10 ;;
+  * ) if ! echo "$SMALL_EDIT_MAX_LINES" | grep -qE '^[0-9]+$'; then SMALL_EDIT_MAX_LINES=10; fi ;;
+esac
+
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BLUE}🧭 Plan Guard: Ensure plan + subagent allocation${NC}"
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -37,7 +47,7 @@ EOF
 # Proactively ensure a GitHub issue exists for the task (non-blocking)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -x "$SCRIPT_DIR/github-ops.sh" ]]; then
-  "$SCRIPT_DIR/github-ops.sh" ensure || true
+  "$SCRIPT_DIR/github-ops.sh" ensure || echo -e "${YELLOW}Warning:${NC} GitHub ensure failed (check gh auth/repo permissions)." >&2
 fi
 
 # Read any stdin (Claude often passes tool metadata JSON); fall back to empty
@@ -72,9 +82,43 @@ if [[ -x "$SCRIPT_DIR/github-ops.sh" && -f .claude/.current_issue ]]; then
   fi
 fi
 
+# Small-edit passthrough: allow single-file edits under threshold, no new files, no schema/API changes
+small_edit_ok=false
+if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -q '"tool_name"\s*:\s*"(Write|Edit)"' || grep -q '"tool_name"[[:space:]]*:[[:space:]]*"\(Write\|Edit\)"'); then
+  # Extract target file path
+  target=""
+  if command -v jq >/dev/null 2>&1; then
+    target=$(echo "$CONTENT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
+  else
+    target=$(echo "$CONTENT" | sed -n 's/.*"file_path"[[:space:]]*:[[:space:]]*"\([^"]\+\)".*/\1/p' | head -n1)
+  fi
+  # Estimate line count if possible
+  line_estimate=""
+  if command -v jq >/dev/null 2>&1; then
+    body=$(echo "$CONTENT" | jq -r '.tool_input.new_content // .tool_input.content // .tool_input.text // .tool_input.replacement // empty' 2>/dev/null)
+    if [[ -n "$body" && "$body" != "null" ]]; then
+      line_estimate=$(printf "%s" "$body" | awk 'END{print NR}')
+    fi
+  fi
+  # No untracked files?
+  nf=0
+  if [[ -d .git ]]; then
+    nf=$(git status --porcelain 2>/dev/null | awk '$1=="??"{c++} END{print c+0}')
+  fi
+  # Schema/API change patterns (block if present)
+  schema_api=false
+  if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -qi '(CREATE|DROP|ALTER)\s+TABLE|add_api_route|router\.|@app\.|OpenAPI' || grep -qiE '(CREATE|DROP|ALTER)[[:space:]]+TABLE|add_api_route|router\.|@app\.|OpenAPI'); then
+    schema_api=true
+  fi
+  if [[ "$schema_api" != true && "$nf" -eq 0 && -n "$target" && -n "$line_estimate" && "$line_estimate" -le "$SMALL_EDIT_MAX_LINES" ]]; then
+    small_edit_ok=true
+    echo -e "${YELLOW}Small-edit passthrough:${NC} allowing single-file edit ($target) under ${SMALL_EDIT_MAX_LINES} lines." >&2
+  fi
+fi
+
 # Strict mode via toggle file: block on any write/edit regardless of complexity
 if [[ -f "$CLAUDE_PLAN_GUARD_STRICT_FILE" ]]; then
-  if [[ "$relax" != true ]] && echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -q '"tool_name"\s*:\s*"(Write|Edit|MultiEdit)"' || grep -q '"tool_name"[[:space:]]*:[[:space:]]*"\(Write\|Edit\|MultiEdit\)"'); then
+  if [[ "$relax" != true && "$small_edit_ok" != true ]] && echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -q '"tool_name"\s*:\s*"(Write|Edit|MultiEdit)"' || grep -q '"tool_name"[[:space:]]*:[[:space:]]*"\(Write\|Edit\|MultiEdit\)"'); then
     echo -e "${RED}⛔ Strict plan required for this repository (toggle file detected).${NC}" >&2
     cat >&2 <<'EOF'
 Please draft the following before proceeding:
@@ -89,7 +133,7 @@ EOF
 fi
 
 # If enforcement disabled or not complex, do not block
-if [[ "$relax" == true || "$CLAUDE_PLAN_GUARD_ENFORCE" != "true" || "$CLAUDE_PLAN_GUARD_BLOCK_COMPLEX" != "true" || "$is_complex" != true ]]; then
+if [[ "$relax" == true || "$small_edit_ok" == true || "$CLAUDE_PLAN_GUARD_ENFORCE" != "true" || "$CLAUDE_PLAN_GUARD_BLOCK_COMPLEX" != "true" || "$is_complex" != true ]]; then
   # Warn if there are many untracked new files without acknowledgment
   if [[ -d .git ]]; then
     NF=$(git status --porcelain 2>/dev/null | awk '$1=="??"{c++} END{print c+0}')
