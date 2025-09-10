@@ -161,6 +161,12 @@ Test Gate Overrides (Special Tasks)
   - Set `CLAUDE_ALLOW_FAILING_TESTS=1` (environment) or create `.claude/allow-failing-tests`
 - Lint gate remains mandatory. Use this sparingly and document rationale in the GitHub issue comment.
 
+Loop Prevention
+- To avoid infinite loops on Stop when gates keep failing, the completion guard:
+  - Tracks consecutive failures and, after 3 repeats, posts a summary to the linked GitHub issue with log paths
+  - Allows completion once to move to the next task (counter resets afterwards)
+  - Normal behavior resumes on subsequent runs
+
 ## Subagent Orchestration Protocol
 
 For tasks with ≥2 independent subtasks or mixed expertise:

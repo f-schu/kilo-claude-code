@@ -202,18 +202,60 @@ fi
 evidence_hint
 readme_check || true
 
+# Loop-prevention state handling
+STATE_DIR=".claude"
+STATE_FILE="${STATE_DIR}/completion-guard.state"
+mkdir -p "$STATE_DIR"
+CONSEC_FAILS=0
+FAIL_REASON=""
+if [[ -f "$STATE_FILE" ]]; then
+  # shellcheck disable=SC1090
+  source "$STATE_FILE" 2>/dev/null || true
+fi
+
 if [[ $FAIL -ne 0 ]]; then
   echo -e "\n${RED}❌ DoD not met: fix failing gates before declaring done.${NC}" >&2
+  # Track consecutive failures and reason
+  if [[ "$TEST_GATE_OPTIONAL" == true ]]; then
+    FAIL_REASON="lint_or_other"
+  else
+    FAIL_REASON="tests_failing"
+  fi
+  CONSEC_FAILS=$((CONSEC_FAILS+1))
+  printf 'CONSEC_FAILS=%s\nFAIL_REASON=%s\n' "$CONSEC_FAILS" "$FAIL_REASON" > "$STATE_FILE"
   # Update GitHub issue with status (non-blocking)
   if [[ -x "$SCRIPT_DIR/github-ops.sh" ]]; then
     STATUS="Automated gates failed. Please address lint/tests.\n\nLogs:\n- Lint: ${LINT_LOG}\n- Tests: ${TEST_LOG}"
     "$SCRIPT_DIR/github-ops.sh" comment "$STATUS" || true
   fi
-  # Exit 2 to keep the session running
+  # If we failed 3 times in a row, document and allow moving on
+  if [[ "$CONSEC_FAILS" -ge 3 ]]; then
+    echo -e "${YELLOW}Repeated failures detected (${CONSEC_FAILS}). Documenting and allowing completion to avoid loops.${NC}" >&2
+    if [[ -x "$SCRIPT_DIR/github-ops.sh" ]]; then
+      SUMMARY=$(cat <<EOF
+Loop prevention engaged after ${CONSEC_FAILS} failed completion checks. Reason: ${FAIL_REASON}.
+
+Evidence logs:
+- Lint: ${LINT_LOG}
+- Tests: ${TEST_LOG}
+
+Next steps suggested:
+- Resolve remaining failures or enable review-mode overrides for review-only tasks.
+EOF
+)
+      "$SCRIPT_DIR/github-ops.sh" comment "$SUMMARY" || true
+    fi
+    # Reset counter after allowing completion so next cycle starts fresh
+    printf 'CONSEC_FAILS=0\nFAIL_REASON=\n' > "$STATE_FILE"
+    exit 0
+  fi
+  # Otherwise keep session running
   exit 2
 fi
 
 echo -e "\n${GREEN}All completion gates passed. Safe to conclude.${NC}" >&2
+# Reset loop-prevention state on success
+printf 'CONSEC_FAILS=0\nFAIL_REASON=\n' > "$STATE_FILE"
 # Post success status to GitHub and optionally close the issue
 if [[ -x "$SCRIPT_DIR/github-ops.sh" ]]; then
   SUCCESS_MSG="All completion gates passed. Evidence logs:\n- Lint: ${LINT_LOG}\n- Tests: ${TEST_LOG}"
