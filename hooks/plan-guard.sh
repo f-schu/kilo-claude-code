@@ -40,16 +40,16 @@ fi
 
 # Heuristic complexity detection
 is_complex=false
-if echo "$CONTENT" | grep -qiE '(Write|Edit|MultiEdit|Task|sequential|Plan)'; then
+if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -qi '(Write|Edit|MultiEdit|Task|sequential|Plan)' || grep -qiE '(Write|Edit|MultiEdit|Task|sequential|Plan)'); then
   # Look for multi-part/complex language
-  if echo "$CONTENT" | grep -qiE '(and|,|;).*\b(implement|refactor|architect|migrate|pipeline|database|visualization|benchmark|deploy|ci|ml|agents?)'; then
+  if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -qi '(and|,|;).*\b(implement|refactor|architect|migrate|pipeline|database|visualization|benchmark|deploy|ci|ml|agents?)' || grep -qiE '(and|,|;).*\b(implement|refactor|architect|migrate|pipeline|database|visualization|benchmark|deploy|ci|ml|agents?)'); then
     is_complex=true
   fi
 fi
 
 # Strict mode via toggle file: block on any write/edit regardless of complexity
 if [[ -f "$CLAUDE_PLAN_GUARD_STRICT_FILE" ]]; then
-  if echo "$CONTENT" | grep -q '"tool_name"[[:space:]]*:[[:space:]]*"\(Write\|Edit\|MultiEdit\)"'; then
+if echo "$CONTENT" | (command -v rg >/dev/null 2>&1 && rg -q '"tool_name"\s*:\s*"(Write|Edit|MultiEdit)"' || grep -q '"tool_name"[[:space:]]*:[[:space:]]*"\(Write\|Edit\|MultiEdit\)"'); then
     echo -e "${RED}⛔ Strict plan required for this repository (toggle file detected).${NC}" >&2
     cat >&2 <<'EOF'
 Please draft the following before proceeding:

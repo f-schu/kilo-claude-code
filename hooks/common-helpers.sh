@@ -63,6 +63,40 @@ command_exists() {
     command -v "$1" &> /dev/null
 }
 
+# Modern tool preferences
+prefer_rg() { command_exists rg; }
+prefer_fd() { command_exists fd; }
+
+# Case-insensitive quiet grep on stdin or files (prefers ripgrep)
+grep_qi() {
+    local pattern="$1"; shift
+    if prefer_rg; then
+        if [[ $# -gt 0 ]]; then
+            rg -qi -- "$pattern" "$@"
+        else
+            rg -qi -- "$pattern"
+        fi
+        return $?
+    else
+        if [[ $# -gt 0 ]]; then
+            grep -qiE -- "$pattern" "$@"
+        else
+            grep -qiE -- "$pattern"
+        fi
+        return $?
+    fi
+}
+
+# Quiet grep (any match) on files (prefers ripgrep)
+grep_q_file() {
+    local pattern="$1"; shift
+    if prefer_rg; then
+        rg -q -- "$pattern" "$@"
+    else
+        grep -qE -- "$pattern" "$@"
+    fi
+}
+
 # Load project configuration
 load_project_config() {
     # User-level config

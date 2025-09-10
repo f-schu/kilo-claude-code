@@ -231,8 +231,13 @@ lint_go() {
     
     # Check if Makefile exists with fmt and lint targets
     if [[ -f "Makefile" ]]; then
-        local has_fmt=$(grep -E "^fmt:" Makefile 2>/dev/null || echo "")
-        local has_lint=$(grep -E "^lint:" Makefile 2>/dev/null || echo "")
+        if command_exists rg; then
+            local has_fmt=$(rg -n "^fmt:" Makefile 2>/dev/null || echo "")
+            local has_lint=$(rg -n "^lint:" Makefile 2>/dev/null || echo "")
+        else
+            local has_fmt=$(grep -E "^fmt:" Makefile 2>/dev/null || echo "")
+            local has_lint=$(grep -E "^lint:" Makefile 2>/dev/null || echo "")
+        fi
         
         if [[ -n "$has_fmt" && -n "$has_lint" ]]; then
             log_info "Using Makefile targets"

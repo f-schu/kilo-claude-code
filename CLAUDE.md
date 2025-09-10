@@ -224,6 +224,18 @@ Would you like me to [specific improvement]?"
 
 Avoid complex abstractions or "clever" code. The simple, obvious solution is probably better, and my guidance helps you stay focused on what matters.
 
+## Tooling Preferences
+
+Prefer modern, efficient CLI tools when available, with graceful fallback:
+- Search: `rg` (ripgrep) over `grep`; use `-n`, `-S`, `--hidden` as needed
+- Find: `fd` over `find` for globs and speed
+- JSON/YAML: `jq`/`yq` for robust parsing over ad-hoc greps
+- Replace: `sd` over `sed` for simple replacements
+- Viewing: `bat -pp` over `cat` when human readability helps (avoid in scripts if formatting matters)
+- Diff: `delta` for reviewing diffs locally
+
+Shell scripts should check for these tools and fall back to POSIX equivalents to maintain portability.
+
 ## MOST IMPORTANT
 
 Deliver the most concise, correct solution that meets the Task Contract and DoD without cutting corners. Prefer minimal, focused changes—but never at the expense of completeness or quality.
