@@ -9,6 +9,14 @@ Kilo Claude Code
 
 This repository contains my Claude Code configuration, hooks, and agent instructions. It is designed to enforce high-quality workflows with explicit planning, subagent orchestration, and strong completion gates.
 
+Workflows
+- CI: Lints hooks, runs ShellCheck (if available), validates agent Return Formats.
+  Link: https://github.com/f-schu/kilo-claude-code/actions/workflows/ci.yml
+- Security Scan: Runs gitleaks (secrets), dependency audits where manifests exist (pip-audit, npm audit, govulncheck, cargo audit).
+  Link: https://github.com/f-schu/kilo-claude-code/actions/workflows/security-scan.yml
+- Validate Agents: Ensures agent docs include valid Return Format JSON with required keys.
+  Link: https://github.com/f-schu/kilo-claude-code/actions/workflows/validate-agents.yml
+
 Key features
 - Plan Guard: requires a Task Contract and Subagent Contracts for complex or strict-mode tasks.
 - Completion Guard: re-runs lint/tests before stopping, logs evidence under `logs/YYYYMMDD/`, and can auto-comment/close GitHub issues.
