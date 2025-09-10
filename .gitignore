@@ -1,0 +1,37 @@
+# Sensitive and local state
+.credentials.json
+.anthropic/
+
+# Logs and snapshots
+logs/
+shell-snapshots/
+
+# Project/task state
+todos/
+statsig/
+PROGRESS.md
+.claude/.current_issue
+ide/
+
+# Downloads and caches
+downloads/
+.tmp/
+
+# Local projects or large workspaces (optional; keep if publishing only settings)
+projects/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Node/build outputs (in case any example code is added)
+node_modules/
+dist/
+build/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
