@@ -103,14 +103,36 @@ def main() -> int:
         except Exception as e:
             errs.append(f"{p.name}: {e}")
     if errs:
-        print("Agent Return Format validation FAILED:", file=sys.stderr)
-        for e in errs:
-            print(f"- {e}", file=sys.stderr)
+        # Pretty print with rich if available
+        try:
+            from rich.console import Console
+            from rich.table import Table
+
+            console = Console(stderr=True)
+            table = Table(title="Agent Return Format validation FAILED", show_lines=False)
+            table.add_column("File/Agent", style="bold red")
+            table.add_column("Issue", overflow="fold")
+            for e in errs:
+                if ": " in e:
+                    left, right = e.split(": ", 1)
+                else:
+                    left, right = ("error", e)
+                table.add_row(left, right)
+            console.print(table)
+        except Exception:
+            print("Agent Return Format validation FAILED:", file=sys.stderr)
+            for e in errs:
+                print(f"- {e}", file=sys.stderr)
         return 1
-    print("Agent Return Format validation OK.")
-    return 0
+    else:
+        try:
+            from rich.console import Console
+            console = Console()
+            console.print("[bold green]Agent Return Format validation OK.[/bold green]")
+        except Exception:
+            print("Agent Return Format validation OK.")
+        return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

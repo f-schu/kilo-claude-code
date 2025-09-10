@@ -37,3 +37,19 @@ Privacy and safety
 
 License
 Specify your preferred license here.
+
+System setup
+- Required
+  - Python 3.10+ (for hooks), pipx or pip
+  - GitHub CLI (`gh`) authenticated: `gh auth login`
+  - ripgrep (`rg`) for fast search; hooks prefer it when present
+  - jq for JSON parsing (used in guards and impact map validation)
+- Recommended
+  - fd (fast find), yq (YAML parsing), sd (simple sed)
+  - gitleaks (secrets scan), pip-audit (Python deps), npm (Node audit), Go (govulncheck), Rust (cargo-audit)
+  - Rich for pretty CLI output in validators: `pipx install rich` or `pip install rich`
+
+Optional enhancements
+- Rich-powered output: some tools (like agent validator) use Rich for nicer tables if installed; otherwise plain text
+- Small-edit passthrough: set `CLAUDE_SMALL_EDIT_MAX_LINES` (default 10) or file `.claude/small-edit-max-lines`
+- Plan/Completion overrides: see CLAUDE.md for label toggles and env/file-based overrides
