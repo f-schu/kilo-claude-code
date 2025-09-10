@@ -19,6 +19,7 @@ echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━�
 
 FAIL=0
 ADDITIVE_ONLY=0
+IMPACT_OK=1
 
 # Logs
 TODAY="$(date +%Y%m%d)"
@@ -192,6 +193,58 @@ readme_check() {
   return $warn
 }
 
+impact_map_check() {
+  # Require an impact map for new files to ensure integration thinking
+  [[ -d .git ]] || return 0
+  # Collect new files (added or untracked)
+  mapfile -t new_files < <(git status --porcelain 2>/dev/null | awk '$1=="A" || $1=="??" {print $2}')
+  # Filter out non-code/doc assets
+  filtered=()
+  for f in "${new_files[@]}"; do
+    [[ -z "$f" ]] && continue
+    case "$f" in
+      README|README.md|docs/*|logs/*|.claude/*|.github/*|assets/*|.gitignore)
+        continue ;;
+      *) filtered+=("$f") ;;
+    esac
+  done
+  if [[ ${#filtered[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  # Overrides
+  if [[ -f .claude/allow-missing-impact ]]; then
+    echo -e "${YELLOW}Override:${NC} .claude/allow-missing-impact present; skipping impact map requirement." >&2
+    IMPACT_OK=0
+    return 0
+  fi
+
+  if ! command -v jq >/dev/null 2>&1; then
+    echo -e "${RED}Blocking:${NC} jq is required to validate .claude/impact.json for new files." >&2
+    echo -e "${YELLOW}Action:${NC} install jq or add .claude/allow-missing-impact to override (not recommended)." >&2
+    return 2
+  fi
+  if [[ ! -f .claude/impact.json ]]; then
+    echo -e "${RED}Blocking:${NC} .claude/impact.json missing but new files detected: ${#filtered[@]}" >&2
+    printf 'Example schema:\n%s\n' '{"integrations":[{"new":"path/to/new.py","integrates_with":["existing/module.py"]}]}' >&2
+    return 2
+  fi
+  # Validate the impact map
+  local missing=0
+  for nf in "${filtered[@]}"; do
+    local count
+    count=$(jq --arg nf "$nf" '[.integrations[]? | select(.new==$nf and (.integrates_with|length>0))] | length' .claude/impact.json 2>/dev/null || echo 0)
+    if [[ "$count" -eq 0 ]]; then
+      echo -e "${RED}Missing impact entry:${NC} $nf (add to .claude/impact.json with integrates_with)" >&2
+      missing=$((missing+1))
+    fi
+  done
+  if [[ $missing -gt 0 ]]; then
+    return 2
+  fi
+  return 0
+}
+
 change_pattern_check() {
   [[ -d .git ]] || return 0
   local added=0 modified=0 deleted=0 untracked=0
@@ -230,6 +283,9 @@ fi
 evidence_hint
 readme_check || true
 if ! change_pattern_check; then
+  FAIL=1
+fi
+if ! impact_map_check; then
   FAIL=1
 fi
 
@@ -300,7 +356,7 @@ printf 'CONSEC_FAILS=0\nFAIL_REASON=\n' > "$STATE_FILE"
 if [[ -x "$SCRIPT_DIR/github-ops.sh" ]]; then
   SUCCESS_MSG="All completion gates passed. Evidence logs:\n- Lint: ${LINT_LOG}\n- Tests: ${TEST_LOG}"
   "$SCRIPT_DIR/github-ops.sh" comment "$SUCCESS_MSG" || true
-  if [[ "$TEST_GATE_OPTIONAL" != true && "$ADDITIVE_ONLY" -ne 1 && "${CLAUDE_GH_AUTO_CLOSE:-true}" == "true" ]]; then
+  if [[ "$TEST_GATE_OPTIONAL" != true && "$ADDITIVE_ONLY" -ne 1 && "$IMPACT_OK" -eq 1 && "${CLAUDE_GH_AUTO_CLOSE:-true}" == "true" ]]; then
     "$SCRIPT_DIR/github-ops.sh" close "Closing automatically after successful gates." || true
   fi
 fi

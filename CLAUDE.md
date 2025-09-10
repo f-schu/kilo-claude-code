@@ -124,6 +124,7 @@ Your code must be 100% clean. No exceptions.
 - Feature verified end-to-end against acceptance criteria
 - Old code removed; docs updated if behavior/API changed
 - Evidence Pack prepared (commands run, outputs/logs, artifact paths)
+- If new files were added, `.claude/impact.json` updated with integration entries mapping each new file to existing modules it integrates with
 
 ### Testing Strategy
 - Complex business logic ? Write tests first
@@ -171,6 +172,17 @@ Loop Prevention
 Plan-Guard Relax by Label
 - If the linked GitHub issue (created by the guard) has a label `fix`, plan-guard will not block even for complex tasks or strict mode edits.
 - Use when you're in an active bug-fix flow and a heavy plan would slow you down.
+
+Impact Map Requirement
+- When adding new files, maintain `.claude/impact.json` to document integration with existing modules
+- Schema example:
+  `{ "integrations": [ { "new": "path/to/new.py", "integrates_with": ["existing/module.py"] } ] }`
+- Completion guard blocks if new files lack entries (override with `.claude/allow-missing-impact`, not recommended)
+
+Bulk New Files Warning
+- Plan-guard warns when there are more than N untracked files (default 5)
+- Configure threshold via env `CLAUDE_NEW_FILES_WARN_THRESHOLD` or file `.claude/new-files-warn-threshold`
+- Acknowledge bulk creation by adding `.claude/ack-many-new-files`
 
 ## Subagent Orchestration Protocol
 

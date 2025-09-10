@@ -13,6 +13,14 @@ NC='\033[0m'
 CLAUDE_PLAN_GUARD_ENFORCE="${CLAUDE_PLAN_GUARD_ENFORCE:-true}"
 CLAUDE_PLAN_GUARD_BLOCK_COMPLEX="${CLAUDE_PLAN_GUARD_BLOCK_COMPLEX:-true}"
 CLAUDE_PLAN_GUARD_STRICT_FILE="${CLAUDE_PLAN_GUARD_STRICT_FILE:-.claude/plan-guard.strict}"
+NEW_FILES_WARN_THRESHOLD="${CLAUDE_NEW_FILES_WARN_THRESHOLD:-}"
+if [[ -z "$NEW_FILES_WARN_THRESHOLD" && -f .claude/new-files-warn-threshold ]]; then
+  NEW_FILES_WARN_THRESHOLD="$(tr -d '\r' < .claude/new-files-warn-threshold | head -n1 | xargs)"
+fi
+case "$NEW_FILES_WARN_THRESHOLD" in
+  '' ) NEW_FILES_WARN_THRESHOLD=5 ;;
+  * ) if ! echo "$NEW_FILES_WARN_THRESHOLD" | grep -qE '^[0-9]+$'; then NEW_FILES_WARN_THRESHOLD=5; fi ;;
+esac
 
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BLUE}🧭 Plan Guard: Ensure plan + subagent allocation${NC}"
@@ -82,6 +90,13 @@ fi
 
 # If enforcement disabled or not complex, do not block
 if [[ "$relax" == true || "$CLAUDE_PLAN_GUARD_ENFORCE" != "true" || "$CLAUDE_PLAN_GUARD_BLOCK_COMPLEX" != "true" || "$is_complex" != true ]]; then
+  # Warn if there are many untracked new files without acknowledgment
+  if [[ -d .git ]]; then
+    NF=$(git status --porcelain 2>/dev/null | awk '$1=="??"{c++} END{print c+0}')
+    if [[ "$NF" -gt "$NEW_FILES_WARN_THRESHOLD" && ! -f .claude/ack-many-new-files ]]; then
+      echo -e "${YELLOW}Warning:${NC} Detected $NF untracked new files. Consider adding a plan note or create .claude/ack-many-new-files to acknowledge bulk file creation." >&2
+    fi
+  fi
   exit 0
 fi
 
