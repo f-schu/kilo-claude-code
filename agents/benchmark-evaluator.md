@@ -98,7 +98,7 @@ Return Format
   "dataset": "path/origin",
   "commands": ["make bench"],
   "metrics": {"latency_ms": {"p50":12.3, "p95":20.1}},
-  "regressions": [{"case":"large_input","delta_ms":+3.2}],
+  "regressions": [{"case":"large_input","delta_ms": 3.2}],
   "artifacts": ["logs/2025.../bench.txt"],
   "next": ["optimize hot loop in foo.py"]
 }
