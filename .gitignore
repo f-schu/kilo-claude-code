@@ -35,3 +35,11 @@ build/
 __pycache__/
 *.pyc
 *.pyo
+
+# Local memory database (DuckDB)
+memori/*.duckdb
+memori/*.duckdb.*
+*.duckdb
+
+# Claude local state (if created here)
+.claude/
