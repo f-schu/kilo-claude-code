@@ -1,4 +1,4 @@
-Below is a tightened, implementation‑ready version of your plan with corrections, power‑ups, and a few drop‑in code snippets. I’ve kept it fully local (no LLMs, no embeddings, no network calls) and tuned for Claude Code hooks + DuckDB FTS.
+Below is a tightened, implementation‑ready version of your plan with corrections, power‑ups, and a few drop‑in code snippets. I’ve kept it fully local (no LLMs, no embeddings, no network calls) and tuned for Claude Code hooks + DuckDB FTS. This document now describes the ApogeeMind memory layer.
 
 ---
 

@@ -27,13 +27,13 @@ class Config:
         default_namespace: Optional[str] = None,
     ) -> "Config":
         db_path = os.environ.get(
-            "MEMORI_DUCKDB_PATH", default_db or str(Path.cwd() / "memori" / "memori.duckdb")
+            "APOGEEMIND_DUCKDB_PATH", default_db or str(Path.cwd() / "apogeemind" / "apogeemind.duckdb")
         )
-        namespace = os.environ.get("MEMORI_NAMESPACE", default_namespace or "default")
-        conscious = _env_bool("MEMORI_CONSCIOUS", True)
-        auto = _env_bool("MEMORI_AUTO", True)
-        stm_capacity = int(os.environ.get("STM_CAPACITY", "20"))
-        promotion_threshold = float(os.environ.get("PROMOTION_THRESHOLD", "0.65"))
+        namespace = os.environ.get("APOGEEMIND_NAMESPACE", default_namespace or "default")
+        conscious = _env_bool("APOGEEMIND_CONSCIOUS", True)
+        auto = _env_bool("APOGEEMIND_AUTO", True)
+        stm_capacity = int(os.environ.get("APOGEEMIND_STM_CAPACITY", os.environ.get("STM_CAPACITY", "20")))
+        promotion_threshold = float(os.environ.get("APOGEEMIND_PROMOTION_THRESHOLD", os.environ.get("PROMOTION_THRESHOLD", "0.65")))
         return cls(
             db_path=db_path,
             namespace=namespace,

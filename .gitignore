@@ -37,8 +37,8 @@ __pycache__/
 *.pyo
 
 # Local memory database (DuckDB)
-memori/*.duckdb
-memori/*.duckdb.*
+apogeemind/*.duckdb
+apogeemind/*.duckdb.*
 *.duckdb
 
 # Claude local state (if created here)

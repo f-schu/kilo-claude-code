@@ -36,7 +36,7 @@ class MemoryStore:
     def __init__(self, config: Optional[MemoryStoreConfig] = None) -> None:
         # Merge env config with provided config; provided values take precedence
         env = EnvConfig.from_env(
-            default_db=str(Path.cwd() / "memori" / "memori.duckdb"),
+            default_db=str(Path.cwd() / "apogeemind" / "apogeemind.duckdb"),
             default_namespace=default_namespace(),
         )
         if config is None:

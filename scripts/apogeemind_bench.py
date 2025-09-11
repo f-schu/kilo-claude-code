@@ -8,7 +8,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Dict
 
-from memori_local.store.memory_store import MemoryStore, MemoryStoreConfig
+from apogeemind.store.memory_store import MemoryStore, MemoryStoreConfig
 
 
 def rand_text(prefix: str, n: int = 12) -> str:
@@ -57,8 +57,8 @@ def bench_retrieval(store: MemoryStore, query: str, n: int) -> Dict[str, Any]:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="Benchmark memori_local operations")
-    ap.add_argument("--db-path", default=str(Path.home() / ".claude/memori/memori.duckdb"))
+    ap = argparse.ArgumentParser(description="Benchmark apogeemind operations")
+    ap.add_argument("--db-path", default=str(Path.cwd() / "apogeemind" / "apogeemind.duckdb"))
     ap.add_argument("--namespace", default="bench")
     ap.add_argument("--chats", type=int, default=200)
     ap.add_argument("--retrievals", type=int, default=50)
@@ -110,4 +110,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

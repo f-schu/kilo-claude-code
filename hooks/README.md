@@ -90,15 +90,15 @@ Lightweight helper for GitHub issue automation (non-blocking):
 - `close`: closes the current issue when done
 - Stores the current issue number in `.claude/.current_issue`
 
-### `memori-inject.sh` and `memori-record.sh`
-Local memory integration for Claude Code using the self-contained memori_local engine:
-- `memori-inject.sh` (UserPromptSubmit): injects a `<system-reminder>` with relevant memories via `scripts/memori_local_inject.py`.
-- `memori-record.sh` (Post-response): records the last user/assistant exchange via `scripts/memori_local_record.py`.
+### `apogeemind-inject.sh` and `apogeemind-record.sh`
+Local memory integration for Claude Code using the self-contained apogeemind engine:
+- `apogeemind-inject.sh` (UserPromptSubmit): injects a `<system-reminder>` with relevant memories via `scripts/apogeemind_inject.py`.
+- `apogeemind-record.sh` (Post-response): records the last user/assistant exchange via `scripts/apogeemind_record.py`.
 
 See docs/instructions/memori_hooks_guide.md for setup, env vars, and troubleshooting.
 
-### `memori-init.sh` (optional)
-Initialize the project-local DuckDB at `./memori/memori.duckdb` and print status. Register on session start if your environment supports it, or run manually once per project.
+### `apogeemind-init.sh` (optional)
+Initialize the project-local DuckDB at `./apogeemind/apogeemind.duckdb` and print status. Register on session start if your environment supports it, or run manually once per project.
 
 ### `file_controlled_flow_hook.py`
 Minimal, file-controlled completion gate:

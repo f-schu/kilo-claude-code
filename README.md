@@ -27,11 +27,11 @@ Overview diagram
 
 ```mermaid
 flowchart LR
-  User -->|UserPromptSubmit| InjectHook[hooks/memori-inject.sh]
-  Assistant -->|Post-Response| RecordHook[hooks/memori-record.sh]
+  User -->|UserPromptSubmit| InjectHook[hooks/apogeemind-inject.sh]
+  Assistant -->|Post-Response| RecordHook[hooks/apogeemind-record.sh]
 
-  InjectHook -->|calls| PyInject[scripts/memori_local_inject.py]
-  RecordHook -->|calls| PyRecord[scripts/memori_local_record.py]
+  InjectHook -->|calls| PyInject[scripts/apogeemind_inject.py]
+  RecordHook -->|calls| PyRecord[scripts/apogeemind_record.py]
 
   PyInject --> Store[MemoryStore]
   PyRecord --> Store
@@ -50,45 +50,45 @@ flowchart LR
   CI3[Validate agents]
 ```
 
-Local memory (memori_local)
+Local memory (apogeemind)
 - Self-contained memory engine inspired by Memori, implemented locally with DuckDB — no external APIs.
 - Stores conversations, derives structured long/short-term memory using deterministic heuristics, and builds bounded system prompts for context injection.
 - Full‑text retrieval via DuckDB fts (with LIKE fallback), namespaces for per-repo isolation, basic schema versioning, and privacy redaction.
 
 Components
-- Code: `memori_local/` (DB manager, heuristics, retrieval, conscious agent, context builder, store)
-- Hooks: `hooks/memori-inject.sh`, `hooks/memori-record.sh`
-- CLIs: `scripts/memori_local_inject.py`, `scripts/memori_local_record.py`
-- Benchmarks: `scripts/memori_local_bench.py`
+- Code: `apogeemind/` (DB manager, heuristics, retrieval, conscious agent, context builder, store)
+- Hooks: `hooks/apogeemind-inject.sh`, `hooks/apogeemind-record.sh`
+- CLIs: `scripts/apogeemind_inject.py`, `scripts/apogeemind_record.py`
+- Benchmarks: `scripts/apogeemind_bench.py`
 
 Docs and usage
-- Hooks + CLI guide: docs/instructions/memori_hooks_guide.md
-- Implementation plan: docs/instructions/memori_implementation_plan.md
- - User guide: docs/instructions/memori_user_guide.md
- - API reference: docs/instructions/memori_api_reference.md
- - Performance & tuning: docs/instructions/memori_performance.md
+- Hooks + CLI guide: docs/instructions/apogeemind_hooks_guide.md
+- Implementation plan: docs/instructions/apogeemind_implementation_plan.md
+ - User guide: docs/instructions/apogeemind_user_guide.md
+ - API reference: docs/instructions/apogeemind_api_reference.md
+ - Performance & tuning: docs/instructions/apogeemind_performance.md
 
 Environment (optional)
-- MEMORI_DUCKDB_PATH (default: ./memori/memori.duckdb)
-- MEMORI_NAMESPACE (default: code:<repo-dir>)
-- MEMORI_CONSCIOUS (default: true)
-- MEMORI_AUTO (default: true)
-- STM_CAPACITY (default: 20)
-- PROMOTION_THRESHOLD (default: 0.65)
+- APOGEEMIND_DUCKDB_PATH (default: ./apogeemind/apogeemind.duckdb)
+- APOGEEMIND_NAMESPACE (default: code:<repo-dir>)
+- APOGEEMIND_CONSCIOUS (default: true)
+- APOGEEMIND_AUTO (default: true)
+- APOGEEMIND_STM_CAPACITY (default: 20)
+- APOGEEMIND_PROMOTION_THRESHOLD (default: 0.65)
 
 Scripts
-- scripts/memori_local_inject.py — prints <system-reminder> with relevant memories for a query
-- scripts/memori_local_record.py — records the last user/assistant exchange
+- scripts/apogeemind_inject.py — prints <system-reminder> with relevant memories for a query
+- scripts/apogeemind_record.py — records the last user/assistant exchange
 
 Hooks
-- hooks/memori-inject.sh — UserPromptSubmit
-- hooks/memori-record.sh — Post-response/record
+- hooks/apogeemind-inject.sh — UserPromptSubmit
+- hooks/apogeemind-record.sh — Post-response/record
 
 Per-project DB and automatic init
-- Default DB path: `./memori/memori.duckdb` inside each project directory.
-- The hooks set `MEMORI_DUCKDB_PATH` and `MEMORI_NAMESPACE` based on the current project directory, so the DB is created/used per project automatically.
+- Default DB path: `./apogeemind/apogeemind.duckdb` inside each project directory.
+- The hooks set `APOGEEMIND_DUCKDB_PATH` and `APOGEEMIND_NAMESPACE` based on the current project directory, so the DB is created/used per project automatically.
 - The Python scripts auto-initialize the DB (create file, schema, migrations) on first use — no manual step required.
-- Optional: run `~/.claude/hooks/memori-init.sh <project-dir>` once to force-create and print status.
+- Optional: run `~/.claude/hooks/apogeemind-init.sh <project-dir>` once to force-create and print status.
 
 How to use
 - Install GitHub CLI (`gh`) and authenticate (`gh auth login`) to enable issue automation.

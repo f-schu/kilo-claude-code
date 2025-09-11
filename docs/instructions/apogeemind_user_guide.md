@@ -1,7 +1,7 @@
-Title: memori_local User Guide (Self‑Contained DuckDB Memory)
+Title: apogeemind User Guide (Self‑Contained DuckDB Memory)
 
 Overview
-- memori_local provides a local memory layer similar to Memori without external APIs. It stores chats, derives structured long/short-term memory, and retrieves relevant context.
+- apogeemind provides a local memory layer without external APIs. It stores chats, derives structured long/short-term memory, and retrieves relevant context.
 
 Install
 - Requires Python 3.10+ and duckdb (`pip install duckdb`).
@@ -9,9 +9,9 @@ Install
 
 Quick Start (Python)
 ```python
-from memori_local.store.memory_store import MemoryStore, MemoryStoreConfig
+from apogeemind.store.memory_store import MemoryStore, MemoryStoreConfig
 
-store = MemoryStore(MemoryStoreConfig(db_path="./memori/memori.duckdb", namespace="my-repo"))
+store = MemoryStore(MemoryStoreConfig(db_path="./apogeemind/apogeemind.duckdb", namespace="my-repo"))
 
 chat_id = store.record_conversation(
     user_input="I prefer using ruff and black.",
@@ -24,7 +24,7 @@ print(store.get_auto_ingest_system_prompt("python tests"))
 ```
 
 Hooks Integration
-- See: docs/instructions/memori_hooks_guide.md
+- See: docs/instructions/apogeemind_hooks_guide.md
 
 Background Scheduler
 ```python
@@ -45,14 +45,14 @@ store.clear_memory("short_term")  # just STM
 store.clear_memory("long_term")   # just LTM
 
 # Export namespace
-data = store.export_namespace(path="/tmp/memori_export.json")
+data = store.export_namespace(path="/tmp/apogeemind_export.json")
 ```
 
 Environment Vars
-- MEMORI_DUCKDB_PATH (default: ./memori/memori.duckdb)
-- MEMORI_NAMESPACE (default: code:<repo-dir>)
-- MEMORI_CONSCIOUS (default: true)
-- MEMORI_AUTO (default: true)
+- APOGEEMIND_DUCKDB_PATH (default: ./apogeemind/apogeemind.duckdb)
+- APOGEEMIND_NAMESPACE (default: code:<repo-dir>)
+- APOGEEMIND_CONSCIOUS (default: true)
+- APOGEEMIND_AUTO (default: true)
 - STM_CAPACITY (default: 20)
 - PROMOTION_THRESHOLD (default: 0.65)
 

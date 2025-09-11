@@ -11,7 +11,7 @@ REPO_ROOT = SCRIPT_DIR.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from memori_local.store.memory_store import MemoryStore, MemoryStoreConfig
+from apogeemind.store.memory_store import MemoryStore, MemoryStoreConfig
 
 
 def get_env_bool(name: str, default: bool) -> bool:
@@ -26,10 +26,10 @@ def main() -> int:
     ap.add_argument("--query", help="User query text to retrieve context for", default="")
     args = ap.parse_args()
 
-    db_path = os.environ.get("MEMORI_DUCKDB_PATH", str(Path.cwd() / "memori" / "memori.duckdb"))
-    namespace = os.environ.get("MEMORI_NAMESPACE")
-    conscious = get_env_bool("MEMORI_CONSCIOUS", True)
-    auto = get_env_bool("MEMORI_AUTO", True)
+    db_path = os.environ.get("APOGEEMIND_DUCKDB_PATH", str(Path.cwd() / "apogeemind" / "apogeemind.duckdb"))
+    namespace = os.environ.get("APOGEEMIND_NAMESPACE")
+    conscious = get_env_bool("APOGEEMIND_CONSCIOUS", True)
+    auto = get_env_bool("APOGEEMIND_AUTO", True)
 
     cfg = MemoryStoreConfig(
         db_path=db_path,

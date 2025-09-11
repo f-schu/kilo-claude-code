@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from memori_local.store.memory_store import MemoryStore, MemoryStoreConfig
+from apogeemind.store.memory_store import MemoryStore, MemoryStoreConfig
 
 
 def make_store(tmp_path: Path, namespace: str = "ns") -> MemoryStore:
@@ -40,4 +40,3 @@ def test_retrieval_engine_ordering(tmp_path: Path):
     # At least one item should be from STM due to promotion in previous steps (if eligible)
     # Not strictly guaranteed, but we should see summaries present
     assert any("summary" in it for it in items)
-

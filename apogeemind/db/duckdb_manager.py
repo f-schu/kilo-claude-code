@@ -10,7 +10,7 @@ except Exception as e:  # pragma: no cover
     duckdb = None
 
 
-DEFAULT_DB_PATH = str((Path.cwd() / "memori" / "memori.duckdb").resolve())
+DEFAULT_DB_PATH = str((Path.cwd() / "apogeemind" / "apogeemind.duckdb").resolve())
 
 
 DDL = {

@@ -29,11 +29,11 @@ PROJECT_DIR="${PWD}"
 CLAUDE_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 
 # Force per-project DB path and namespace
-export MEMORI_DUCKDB_PATH="${MEMORI_DUCKDB_PATH:-$PROJECT_DIR/memori/memori.duckdb}"
-if [[ -z "${MEMORI_NAMESPACE:-}" ]]; then
-  export MEMORI_NAMESPACE="code:$(basename "$PROJECT_DIR")"
+export APOGEEMIND_DUCKDB_PATH="${APOGEEMIND_DUCKDB_PATH:-$PROJECT_DIR/apogeemind/apogeemind.duckdb}"
+if [[ -z "${APOGEEMIND_NAMESPACE:-}" ]]; then
+  export APOGEEMIND_NAMESPACE="code:$(basename "$PROJECT_DIR")"
 fi
 
 # Call the Python recorder from the .claude repo
-python3 "$CLAUDE_REPO_ROOT/scripts/memori_local_record.py" --user "$user_text" --assistant "$assistant_text"
+python3 "$CLAUDE_REPO_ROOT/scripts/apogeemind_record.py" --user "$user_text" --assistant "$assistant_text"
 exit 0

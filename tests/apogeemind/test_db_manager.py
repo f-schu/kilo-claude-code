@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from memori_local.db.duckdb_manager import DuckDBManager
+from apogeemind.db.duckdb_manager import DuckDBManager
 
 
 def test_schema_init_and_basic_inserts(tmp_path: Path):

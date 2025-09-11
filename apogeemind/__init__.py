@@ -1,5 +1,5 @@
 """
-memori_local: A self-contained, API-free memory layer using DuckDB.
+apogeemind: A self-contained, API-free memory layer using DuckDB.
 
 Modules:
 - db.duckdb_manager: DB access, schema, FTS adapter
@@ -15,4 +15,3 @@ __all__ = [
 ]
 
 __version__ = "0.1.0"
-

@@ -8,11 +8,11 @@ PROJECT_DIR="${1:-$(pwd)}"
 CLAUDE_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)"
 
 # Set per-project defaults if not overridden by env
-export MEMORI_DUCKDB_PATH="${MEMORI_DUCKDB_PATH:-$PROJECT_DIR/memori/memori.duckdb}"
-if [[ -z "${MEMORI_NAMESPACE:-}" ]]; then
+export APOGEEMIND_DUCKDB_PATH="${APOGEEMIND_DUCKDB_PATH:-$PROJECT_DIR/apogeemind/apogeemind.duckdb}"
+if [[ -z "${APOGEEMIND_NAMESPACE:-}" ]]; then
   base="$(basename "$PROJECT_DIR")"
-  export MEMORI_NAMESPACE="code:${base}"
+  export APOGEEMIND_NAMESPACE="code:${base}"
 fi
 
-python3 "$CLAUDE_REPO_ROOT/scripts/memori_local_init.py"
+python3 "$CLAUDE_REPO_ROOT/scripts/apogeemind_init.py"
 exit 0

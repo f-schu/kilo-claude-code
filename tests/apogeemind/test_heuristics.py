@@ -1,4 +1,4 @@
-from memori_local.processing.heuristics import HeuristicProcessor
+from apogeemind.processing.heuristics import HeuristicProcessor
 
 
 def test_preference_classification_and_promotion():

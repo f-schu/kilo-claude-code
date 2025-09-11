@@ -1,9 +1,9 @@
-Title: memori_local Performance & Tuning
+Title: apogeemind Performance & Tuning
 
 Benchmarking
 - Use the provided script:
   ```bash
-  python3 scripts/memori_local_bench.py --db-path ./memori/memori.duckdb \
+  python3 scripts/apogeemind_bench.py --db-path ./apogeemind/apogeemind.duckdb \
       --namespace bench --chats 300 --retrievals 100 --query pytest --fts auto
   ```
 - Reports:
