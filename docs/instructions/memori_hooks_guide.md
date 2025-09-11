@@ -28,9 +28,10 @@ Install & Register
    - Post-response (or closest): hooks/memori-record.sh
 
 Behavior
-- On user prompt, memori-inject.sh parses the pending text and calls scripts/memori_local_inject.py.
-  - The script prints a <system-reminder>…</system-reminder> block that Claude Code appends to the context.
-- After the assistant responds, memori-record.sh parses the transcript’s last user/assistant texts and calls scripts/memori_local_record.py to store them and update memories.
+- On user prompt, `memori-inject.sh` parses the pending text and calls `scripts/memori_local_inject.py`.
+  - The script prints a `<system-reminder>…</system-reminder>` block that Claude Code appends to the context.
+- After the assistant responds, `memori-record.sh` parses the transcript’s last user/assistant texts and calls `scripts/memori_local_record.py` to store them and update memories.
+- Both hooks set `MEMORI_DUCKDB_PATH` to `./memori/memori.duckdb` (per project) if not already set, and will create/initialize the DB on first run.
 
 Validation & Troubleshooting
 - Quick run (outside of hooks):
@@ -38,6 +39,7 @@ Validation & Troubleshooting
   - python3 scripts/memori_local_inject.py --query "python tests"
     - Should print a system-reminder block with relevant items.
 - If DuckDB FTS isn’t available, the system uses LIKE fallback automatically.
+- If you see `ModuleNotFoundError: memori_local`, ensure you’re using the hooks from this repo; the scripts add the repo root to `PYTHONPATH` at runtime for reliability.
 - To reset locally, remove ./memori/memori.duckdb (this clears all data for the project).
 
 Security / Privacy

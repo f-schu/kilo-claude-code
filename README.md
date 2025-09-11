@@ -84,6 +84,12 @@ Hooks
 - hooks/memori-inject.sh — UserPromptSubmit
 - hooks/memori-record.sh — Post-response/record
 
+Per-project DB and automatic init
+- Default DB path: `./memori/memori.duckdb` inside each project directory.
+- The hooks set `MEMORI_DUCKDB_PATH` and `MEMORI_NAMESPACE` based on the current project directory, so the DB is created/used per project automatically.
+- The Python scripts auto-initialize the DB (create file, schema, migrations) on first use — no manual step required.
+- Optional: run `~/.claude/hooks/memori-init.sh <project-dir>` once to force-create and print status.
+
 How to use
 - Install GitHub CLI (`gh`) and authenticate (`gh auth login`) to enable issue automation.
 - Place a toggle file `.claude/plan-guard.strict` to enforce planning on any write/edit.
