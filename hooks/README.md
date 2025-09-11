@@ -100,6 +100,19 @@ See docs/instructions/memori_hooks_guide.md for setup, env vars, and troubleshoo
 ### `memori-init.sh` (optional)
 Initialize the project-local DuckDB at `./memori/memori.duckdb` and print status. Register on session start if your environment supports it, or run manually once per project.
 
+### `file_controlled_flow_hook.py`
+Minimal, file-controlled completion gate:
+- Looks for `flow.txt` in the project directory (and a few fallbacks).
+- If it contains `0`: allows completion immediately (exit 0).
+- If it contains `1` (or missing): sleeps (default 30s) and exits 2 to block completion, keeping the session going.
+
+Usage:
+- Register under a completion/stop hook in Claude Code.
+- Place `flow.txt` in your project root with `1` to stay in flow; change to `0` when you want to let Claude finish.
+- Config via env:
+  - `FLOW_HOOK_SLEEP_SECONDS` (default 30)
+  - `FLOW_HOOK_DEBUG=1` to log details
+
 ## Installation
 
 Automatically installed by Nix home-manager to `~/.claude/hooks/`
