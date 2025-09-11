@@ -23,6 +23,76 @@ Key features
 - GitHub Issue Automation: optional integration via `gh` CLI to open, comment, and close issues for each task.
 - Adaptive Repo Structure: prefer conventional layouts per ecosystem instead of forcing a single structure.
 
+Overview diagram
+
+```mermaid
+flowchart LR
+  subgraph IDE[Claude Code]
+    U[User] -->|UserPromptSubmit| HookInject[hooks/memori-inject.sh]
+    A[Assistant] -->|Post-Response| HookRecord[hooks/memori-record.sh]
+  end
+
+  HookInject -->|calls| PyInject[scripts/memori_local_inject.py]
+  HookRecord -->|calls| PyRecord[scripts/memori_local_record.py]
+
+  subgraph Local Memory (memori_local)
+    PyInject --> Store[MemoryStore]
+    PyRecord --> Store
+    Store -->|record| Heur[HeuristicProcessor]
+    Store -->|promote| CA[ConsciousAgent]
+    Store -->|search| Ret[RetrievalEngine]
+    Ret --> Ctx[ContextBuilder]
+  end
+
+  Ctx -->|system-reminder| IDE
+
+  subgraph Storage
+    DB[(DuckDB)]
+  end
+
+  Store <--> DB
+
+  subgraph CI/CD
+    CI1[CI: lint/tests]
+    CI2[Security scan]
+    CI3[Validate agents]
+  end
+```
+
+Local memory (memori_local)
+- Self-contained memory engine inspired by Memori, implemented locally with DuckDB — no external APIs.
+- Stores conversations, derives structured long/short-term memory using deterministic heuristics, and builds bounded system prompts for context injection.
+- Full‑text retrieval via DuckDB fts (with LIKE fallback), namespaces for per-repo isolation, basic schema versioning, and privacy redaction.
+
+Components
+- Code: `memori_local/` (DB manager, heuristics, retrieval, conscious agent, context builder, store)
+- Hooks: `hooks/memori-inject.sh`, `hooks/memori-record.sh`
+- CLIs: `scripts/memori_local_inject.py`, `scripts/memori_local_record.py`
+- Benchmarks: `scripts/memori_local_bench.py`
+
+Docs and usage
+- Hooks + CLI guide: docs/instructions/memori_hooks_guide.md
+- Implementation plan: docs/instructions/memori_implementation_plan.md
+ - User guide: docs/instructions/memori_user_guide.md
+ - API reference: docs/instructions/memori_api_reference.md
+ - Performance & tuning: docs/instructions/memori_performance.md
+
+Environment (optional)
+- MEMORI_DUCKDB_PATH (default: ~/.claude/memori/memori.duckdb)
+- MEMORI_NAMESPACE (default: code:<repo-dir>)
+- MEMORI_CONSCIOUS (default: true)
+- MEMORI_AUTO (default: true)
+- STM_CAPACITY (default: 20)
+- PROMOTION_THRESHOLD (default: 0.65)
+
+Scripts
+- scripts/memori_local_inject.py — prints <system-reminder> with relevant memories for a query
+- scripts/memori_local_record.py — records the last user/assistant exchange
+
+Hooks
+- hooks/memori-inject.sh — UserPromptSubmit
+- hooks/memori-record.sh — Post-response/record
+
 How to use
 - Install GitHub CLI (`gh`) and authenticate (`gh auth login`) to enable issue automation.
 - Place a toggle file `.claude/plan-guard.strict` to enforce planning on any write/edit.
