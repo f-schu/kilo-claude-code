@@ -100,6 +100,11 @@ See docs/instructions/memori_hooks_guide.md for setup, env vars, and troubleshoo
 ### `apogeemind-init.sh` (optional)
 Initialize the project-local DuckDB at `./apogeemind/apogeemind.duckdb` and print status. Register on session start if your environment supports it, or run manually once per project.
 
+### `apogeemind-health.sh` (optional)
+Print a one-line status with DB path and counts (chats/STM/LTM) after a response:
+- Register as a post-response hook to verify live updates.
+- Env `APOGEEMIND_HEALTH_TO_CONTEXT=1` prints as a `<system-reminder>` to context; otherwise logs to stderr.
+
 ### `file_controlled_flow_hook.py`
 Minimal, file-controlled completion gate:
 - Looks for `flow.txt` in the project directory (and a few fallbacks).
