@@ -78,7 +78,7 @@ Docs and usage
  - Performance & tuning: docs/instructions/memori_performance.md
 
 Environment (optional)
-- MEMORI_DUCKDB_PATH (default: ~/.claude/memori/memori.duckdb)
+- MEMORI_DUCKDB_PATH (default: ./memori/memori.duckdb)
 - MEMORI_NAMESPACE (default: code:<repo-dir>)
 - MEMORI_CONSCIOUS (default: true)
 - MEMORI_AUTO (default: true)

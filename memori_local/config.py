@@ -27,7 +27,7 @@ class Config:
         default_namespace: Optional[str] = None,
     ) -> "Config":
         db_path = os.environ.get(
-            "MEMORI_DUCKDB_PATH", default_db or str(Path.home() / ".claude/memori/memori.duckdb")
+            "MEMORI_DUCKDB_PATH", default_db or str(Path.cwd() / "memori" / "memori.duckdb")
         )
         namespace = os.environ.get("MEMORI_NAMESPACE", default_namespace or "default")
         conscious = _env_bool("MEMORI_CONSCIOUS", True)
@@ -42,4 +42,3 @@ class Config:
             stm_capacity=stm_capacity,
             promotion_threshold=promotion_threshold,
         )
-

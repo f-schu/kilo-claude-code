@@ -3,7 +3,7 @@ Title: memori_local Performance & Tuning
 Benchmarking
 - Use the provided script:
   ```bash
-  python3 scripts/memori_local_bench.py --db-path ~/.claude/memori/memori.duckdb \
+  python3 scripts/memori_local_bench.py --db-path ./memori/memori.duckdb \
       --namespace bench --chats 300 --retrievals 100 --query pytest --fts auto
   ```
 - Reports:
@@ -28,4 +28,3 @@ Troubleshooting
 - If FTS queries fail, the system switches to LIKE path automatically.
 - If retrieval is slow, check that query terms actually match indexed fields (summary/searchable_content).
 - Use namespaces to keep datasets smaller and query filters tight.
-

@@ -19,7 +19,7 @@ def main() -> int:
     ap.add_argument("--query", help="User query text to retrieve context for", default="")
     args = ap.parse_args()
 
-    db_path = os.environ.get("MEMORI_DUCKDB_PATH", os.path.expanduser("~/.claude/memori/memori.duckdb"))
+    db_path = os.environ.get("MEMORI_DUCKDB_PATH", str(Path.cwd() / "memori" / "memori.duckdb"))
     namespace = os.environ.get("MEMORI_NAMESPACE")
     conscious = get_env_bool("MEMORI_CONSCIOUS", True)
     auto = get_env_bool("MEMORI_AUTO", True)
@@ -49,4 +49,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

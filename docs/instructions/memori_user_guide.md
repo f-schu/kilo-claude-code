@@ -11,7 +11,7 @@ Quick Start (Python)
 ```python
 from memori_local.store.memory_store import MemoryStore, MemoryStoreConfig
 
-store = MemoryStore(MemoryStoreConfig(db_path="~/.claude/memori/memori.duckdb", namespace="my-repo"))
+store = MemoryStore(MemoryStoreConfig(db_path="./memori/memori.duckdb", namespace="my-repo"))
 
 chat_id = store.record_conversation(
     user_input="I prefer using ruff and black.",
@@ -49,7 +49,7 @@ data = store.export_namespace(path="/tmp/memori_export.json")
 ```
 
 Environment Vars
-- MEMORI_DUCKDB_PATH (default: ~/.claude/memori/memori.duckdb)
+- MEMORI_DUCKDB_PATH (default: ./memori/memori.duckdb)
 - MEMORI_NAMESPACE (default: code:<repo-dir>)
 - MEMORI_CONSCIOUS (default: true)
 - MEMORI_AUTO (default: true)
@@ -61,4 +61,3 @@ Tips
 - Prefer FTS enabled for faster retrievals; falls back to LIKE otherwise.
 - Use namespaces per repo/workspace for clean isolation.
 - Redaction is applied before storage; extend patterns if needed.
-

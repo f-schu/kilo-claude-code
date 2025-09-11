@@ -13,7 +13,7 @@ Overview
   - hooks/memori-record.sh — Post-response: extracts last user/assistant texts and records them.
 
 Environment Variables (optional)
-- MEMORI_DUCKDB_PATH — DB location (default: ~/.claude/memori/memori.duckdb)
+- MEMORI_DUCKDB_PATH — DB location (default: ./memori/memori.duckdb within the project)
 - MEMORI_NAMESPACE — Logical namespace (default: code:<repo-dir>)
 - MEMORI_CONSCIOUS — Enable initial promotion / working memory (default: true)
 - MEMORI_AUTO — Enable per-query retrieval (default: true)
@@ -38,7 +38,7 @@ Validation & Troubleshooting
   - python3 scripts/memori_local_inject.py --query "python tests"
     - Should print a system-reminder block with relevant items.
 - If DuckDB FTS isn’t available, the system uses LIKE fallback automatically.
-- To reset locally, remove ~/.claude/memori/memori.duckdb (this clears all data).
+- To reset locally, remove ./memori/memori.duckdb (this clears all data for the project).
 
 Security / Privacy
 - Data is local. Consider adding redaction (Phase 3) to strip secrets before writing.
@@ -46,4 +46,3 @@ Security / Privacy
 Notes
 - Namespacing allows per-repo or per-project isolation (default: code:<repo-dir>).
 - Conscious (working memory) keeps essential facts readily available; Auto adds per‑query dynamic retrieval.
-

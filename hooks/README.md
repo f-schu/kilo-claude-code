@@ -97,6 +97,9 @@ Local memory integration for Claude Code using the self-contained memori_local e
 
 See docs/instructions/memori_hooks_guide.md for setup, env vars, and troubleshooting.
 
+### `memori-init.sh` (optional)
+Initialize the project-local DuckDB at `./memori/memori.duckdb` and print status. Register on session start if your environment supports it, or run manually once per project.
+
 ## Installation
 
 Automatically installed by Nix home-manager to `~/.claude/hooks/`

@@ -10,7 +10,7 @@ except Exception as e:  # pragma: no cover
     duckdb = None
 
 
-DEFAULT_DB_PATH = os.path.expanduser("~/.claude/memori/memori.duckdb")
+DEFAULT_DB_PATH = str((Path.cwd() / "memori" / "memori.duckdb").resolve())
 
 
 DDL = {
