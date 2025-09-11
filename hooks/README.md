@@ -90,6 +90,13 @@ Lightweight helper for GitHub issue automation (non-blocking):
 - `close`: closes the current issue when done
 - Stores the current issue number in `.claude/.current_issue`
 
+### `memori-inject.sh` and `memori-record.sh`
+Local memory integration for Claude Code using the self-contained memori_local engine:
+- `memori-inject.sh` (UserPromptSubmit): injects a `<system-reminder>` with relevant memories via `scripts/memori_local_inject.py`.
+- `memori-record.sh` (Post-response): records the last user/assistant exchange via `scripts/memori_local_record.py`.
+
+See docs/instructions/memori_hooks_guide.md for setup, env vars, and troubleshooting.
+
 ## Installation
 
 Automatically installed by Nix home-manager to `~/.claude/hooks/`
