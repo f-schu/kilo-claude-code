@@ -27,36 +27,27 @@ Overview diagram
 
 ```mermaid
 flowchart LR
-  subgraph IDE[Claude Code]
-    U[User] -->|UserPromptSubmit| HookInject[hooks/memori-inject.sh]
-    A[Assistant] -->|Post-Response| HookRecord[hooks/memori-record.sh]
-  end
+  User -->|UserPromptSubmit| InjectHook[hooks/memori-inject.sh]
+  Assistant -->|Post-Response| RecordHook[hooks/memori-record.sh]
 
-  HookInject -->|calls| PyInject[scripts/memori_local_inject.py]
-  HookRecord -->|calls| PyRecord[scripts/memori_local_record.py]
+  InjectHook -->|calls| PyInject[scripts/memori_local_inject.py]
+  RecordHook -->|calls| PyRecord[scripts/memori_local_record.py]
 
-  subgraph Local Memory (memori_local)
-    PyInject --> Store[MemoryStore]
-    PyRecord --> Store
-    Store -->|record| Heur[HeuristicProcessor]
-    Store -->|promote| CA[ConsciousAgent]
-    Store -->|search| Ret[RetrievalEngine]
-    Ret --> Ctx[ContextBuilder]
-  end
+  PyInject --> Store[MemoryStore]
+  PyRecord --> Store
 
-  Ctx -->|system-reminder| IDE
+  Store --> Heur[HeuristicProcessor]
+  Store --> CA[ConsciousAgent]
+  Store --> Ret[RetrievalEngine]
+  Ret --> Ctx[ContextBuilder]
+  Ctx -->|system-reminder| ClaudeCode
 
-  subgraph Storage
-    DB[(DuckDB)]
-  end
+  Store --> DB[(DuckDB)]
+  DB --> Store
 
-  Store <--> DB
-
-  subgraph CI/CD
-    CI1[CI: lint/tests]
-    CI2[Security scan]
-    CI3[Validate agents]
-  end
+  CI1[CI: lint/tests]
+  CI2[Security scan]
+  CI3[Validate agents]
 ```
 
 Local memory (memori_local)
