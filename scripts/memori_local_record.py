@@ -3,6 +3,13 @@ import json
 import os
 import sys
 from argparse import ArgumentParser
+from pathlib import Path
+
+# Ensure repo root (parent of scripts/) is importable
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 from memori_local.store.memory_store import MemoryStore, MemoryStoreConfig
 
